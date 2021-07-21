@@ -3,7 +3,7 @@
 1.let's navigate to /graphql-course/graphqk-basics
 
 2.Install depedencies
->npm init
+>npm i
 
 You will install babel, graphQl-yoga and you'll be able to start the project
 
