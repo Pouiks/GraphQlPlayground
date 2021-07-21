@@ -1,13 +1,47 @@
 const { GraphQLServer } = require('graphql-yoga')
  
+// Demo user data
+
+const users = [{
+  id: '1',
+  name: 'Virgile',
+  email: 'virgile@example.com',
+  age: 30
+}, {
+  id: '2',
+  name: 'Bruno',
+  email: 'bruno@example.com'
+}, {
+  id:'3',
+  name: 'Yann',
+  email: 'yann@example.com',
+  age: 31
+}]
+
+const posts = [{
+  id: '1',
+  title: 'Découverte de graphQl',
+  body: 'lorem ipsum dolor sit amet, consectet',
+  published: false
+}, {
+  id: '2',
+  title: 'la phase caché de postgresQL',
+  body: 'lorem ipsum dolor sit amet, consectet',
+  published: true
+},{
+  id: '3',
+  title: 'Signature d\'un cdi dans ma boite',
+  body: 'lorem ipsum dolor sit amet, consectet',
+  published: false
+}]
+
 // Type Definitions
 const typeDefs = `
   type Query {
-    greeting(name: String, position:String): String!
+    users(query: String): [User!]!
+    posts(query: String): [Post!]!
     me: User!
     post: Post!
-    additionnal(numbers: [Float!]!): Float!
-    grades: [Int!]!
   }
 
   type User {
@@ -27,29 +61,25 @@ const typeDefs = `
 // Resolvers
 const resolvers = {
   Query: {
-    additionnal: (parent, args, ctx, info) => {
-      if(args.numbers.length === 0){
-        return 0
+    posts: (parent, args, ctx, info) => {
+      if(!args.query){
+        return posts
       }
 
-      //[1, 5, 10, 2]
-      return args.numbers.reduce((accumulator, currentValue)=> {
-        // Each step :
-        // 1 + 5 = 6 
-        // 6 + 10 = 16  
-        // 16 + 2 = 18
-        return accumulator + currentValue
+      return posts.filter((post) => {
+        const isTitleMatch = post.title.toLocaleLowerCase().includes(args.query.toLowerCase())
+        const isBodyMatch = post.body.toLocaleLowerCase().includes(args.query.toLowerCase())
+        return isTitleMatch || isBodyMatch
+
       })
     },
-    grades: (parent, args, ctx, info) => {
-      return [99,80,93]
-    },
-    greeting: (parent, args, ctx,info) => {
-      if(args.name && args.position){
-        return `Hello ${args.name}! You are my favorite ${args.position}`
-      } else {
-        return 'Hello !'
+    users: (parent, args, ctx, info) => {
+      if(!args.query){
+        return users
       }
+      return users.filter((user) => {
+        return user.name.toLowerCase().includes(args.query.toLowerCase())
+      })
     },
     me: () => {
         return {
