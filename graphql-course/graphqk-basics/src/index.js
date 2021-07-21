@@ -3,8 +3,10 @@ const { GraphQLServer } = require('graphql-yoga')
 // Type Definitions
 const typeDefs = `
   type Query {
+    greeting(name: String, position:String): String!
     me: User!
     post: Post!
+    additionnal(x: Float!, y: Float!): Float!
   }
 
   type User {
@@ -24,6 +26,20 @@ const typeDefs = `
 // Resolvers
 const resolvers = {
   Query: {
+    additionnal: (parent, args, ctx, info) => {
+      if(args.x && args.y) {
+        return args.x + args.y
+      } else {
+        return 0
+      }
+    },
+    greeting: (parent, args, ctx,info) => {
+      if(args.name && args.position){
+        return `Hello ${args.name}! You are my favorite ${args.position}`
+      } else {
+        return 'Hello !'
+      }
+    },
     me: () => {
         return {
             id: '123098',
