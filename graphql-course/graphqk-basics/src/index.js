@@ -6,7 +6,8 @@ const typeDefs = `
     greeting(name: String, position:String): String!
     me: User!
     post: Post!
-    additionnal(x: Float!, y: Float!): Float!
+    additionnal(numbers: [Float!]!): Float!
+    grades: [Int!]!
   }
 
   type User {
@@ -27,11 +28,21 @@ const typeDefs = `
 const resolvers = {
   Query: {
     additionnal: (parent, args, ctx, info) => {
-      if(args.x && args.y) {
-        return args.x + args.y
-      } else {
+      if(args.numbers.length === 0){
         return 0
       }
+
+      //[1, 5, 10, 2]
+      return args.numbers.reduce((accumulator, currentValue)=> {
+        // Each step :
+        // 1 + 5 = 6 
+        // 6 + 10 = 16  
+        // 16 + 2 = 18
+        return accumulator + currentValue
+      })
+    },
+    grades: (parent, args, ctx, info) => {
+      return [99,80,93]
     },
     greeting: (parent, args, ctx,info) => {
       if(args.name && args.position){
