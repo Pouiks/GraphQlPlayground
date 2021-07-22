@@ -1,14 +1,14 @@
 const { GraphQLServer } = require('graphql-yoga')
 const { v4: uuidv4 } = require('uuid'); 
 // Demo user data
-const comments = [{
+let comments = [{
   id: '1',
   text: 'Awesome article, i read it many times',
   author: '1',
   post: '1'
 }, {
   id : '2',
-  text: 'Not the best article ever read, but it\s ok ',
+  text: 'Not the best article ever read, but its ok ',
   author: '2',
   post: '2'
 }, {
@@ -23,7 +23,7 @@ const comments = [{
   post: '1'
 }]
 
-const users = [{
+let users = [{
   id: '1',
   name: 'Virgile',
   email: 'virgile@example.com',
@@ -39,7 +39,7 @@ const users = [{
   age: 31,
 }]
 
-const posts = [{
+let posts = [{
   id: '1',
   title: 'Découverte de graphQl',
   body: 'lorem ipsum dolor sit amet, consectet',
@@ -53,7 +53,7 @@ const posts = [{
   author: '1'
 },{
   id: '3',
-  title: 'Signature d\'un cdi dans ma boite',
+  title: 'Signature dun cdi dans ma boite',
   body: 'lorem ipsum dolor sit amet, consectet',
   published: false,
   author: '3'
@@ -70,9 +70,29 @@ const typeDefs = `
   }
 
   type Mutation {
-    createUser(name: String!, email: String!, age: Int): User!
-    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
-    createComment(text: String!, author: ID!, post: ID!): Comment!
+    createUser(data: CreateUserInput!): User!
+    deleteUser(id:ID!): User!
+    createPost(data: CreatePostInput!): Post!
+    createComment(data: CreateCommentInput!): Comment!
+  }
+
+  input CreateUserInput {
+    name: String!
+    email: String!
+    age: Int!
+  }
+
+  input CreateCommentInput{
+    text: String!
+    author: ID!
+    post: ID!
+  }
+
+  input CreatePostInput {
+    title: String!
+    body: String!
+    published: Boolean!
+    author: ID!
   }
 
   type User {
@@ -152,31 +172,49 @@ const resolvers = {
   },
   Mutation: {
     createUser: (parent, args, ctx, info) =>  {
-      const emailTaken = users.some((user)=>user.email === args.email)
+      const emailTaken = users.some((user)=> user.email === args.data.email)
       if(emailTaken){
         throw new Error('Email already exist')
       }
 
       const user = {
         id: uuidv4(),
-        ...args
+        ...args.data
       }
       users.push(user)
 
       return user
     },
-    createPost(parent, args, ctx, info){
-      const userExist = users.some((user) => user.id === args.author)
-      const postExist = posts.some((post) => post.title === args.title )
-      if(!userExist){
+    deleteUser: (parent, args, ctx, info) => {
+      const userIndex = users.findIndex((user)=> user.id === args.id)
+      if(userIndex === -1){
         throw new Error('This user doesn\'t exist')
+      }
+
+      const deletedUser = users.splice(userIndex, 1)
+      posts = posts.filter((post) => {
+        const match = post.author === args.id
+          if(match){
+            comments = comments.filter((comment) => comment.post === args.post)
+          }
+        return !match
+      })
+      comments = comments.filter((comment) => comment.post === args.id)
+      return deletedUser[0]
+      
+    },
+    createPost(parent, args, ctx, info){
+      const userExist = users.some((user) => user.id === args.data.author)
+      const postExist = posts.some((post) => post.title === args.data.title)
+      if(!userExist){
+        throw new Error('This user doesnt exist')
       }else if(postExist){
         throw new Error('Title is taken by another post')
       }
 
       const post = {
         id: uuidv4(),
-        ...args
+        ...args.data
       }
 
       posts.push(post)
@@ -184,19 +222,19 @@ const resolvers = {
       return post 
     },
     createComment(parent, args, ctx, info){
-      const userExist = users.some((user) => user.id === args.author)
+      const userExist = users.some((user) => user.id === args.data.author)
       const postExist = posts.some((post) => {
-        return post.id === args.post && post.published
+        return post.id === args.data.post && post.published
       })
       if(!userExist){
-        throw new Error('This user doesn\'t exist')
+        throw new Error('This user doesnt exist')
       }else if(!postExist){
-        throw new Error('This post doesn\'t exist')
+        throw new Error('This post doesnt exist')
       }
 
       const comment = {
         id: uuidv4(),
-        ...args
+        ...args.data
       }
       comments.push(comment)
 
