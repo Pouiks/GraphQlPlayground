@@ -190,7 +190,9 @@ const resolvers = {
     },
     createComment(parent, args, ctx, info){
       const userExist = users.some((user) => user.id === args.author)
-      const postExist = posts.some((post) => post.id === args.post )
+      const postExist = posts.some((post) => {
+        return post.id === args.post && post.published
+      })
       if(!userExist){
         throw new Error('This user doesn\'t exist')
       }else if(!postExist){
