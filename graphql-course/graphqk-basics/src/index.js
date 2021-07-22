@@ -73,6 +73,7 @@ const typeDefs = `
     createUser(data: CreateUserInput!): User!
     deleteUser(id:ID!): User!
     createPost(data: CreatePostInput!): Post!
+    deletePost(id:ID!): Post!
     createComment(data: CreateCommentInput!): Comment!
   }
 
@@ -186,12 +187,17 @@ const resolvers = {
       return user
     },
     deleteUser: (parent, args, ctx, info) => {
-      const userIndex = users.findIndex((user)=> user.id === args.id)
+      // Je recupere l'index du User
+      const userIndex = users.findInex((user)=> user.id === args.id)
+      // si l'index du user n'existe pas, je return une erreur
       if(userIndex === -1){
         throw new Error('This user doesn\'t exist')
       }
-
+      // je supprime dans le tableau l'index de userIndex, 1 valeur
       const deletedUser = users.splice(userIndex, 1)
+      // Je vais chercher dans les posts
+      // si l'auteur match avec avec l'id des auteurs d'article
+      // je supprime les commentaires qui ont l'id du post en cours
       posts = posts.filter((post) => {
         const match = post.author === args.id
           if(match){
@@ -220,6 +226,17 @@ const resolvers = {
       posts.push(post)
 
       return post 
+    },
+    deletePost(parent, args, ctx, info) {
+      const postIndex = posts.findIndex((post) => post.id === args.id)
+      if(postIndex === -1){
+        throw new Error( "This post do not exist")
+      }
+      const deletedPost = posts.splice(postIndex, 1)
+      
+      comments = comments.filter((comment) =>  comment.post === args.id )
+
+      return deletedPost[0]
     },
     createComment(parent, args, ctx, info){
       const userExist = users.some((user) => user.id === args.data.author)
