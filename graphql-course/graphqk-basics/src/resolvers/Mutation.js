@@ -106,25 +106,24 @@ const Mutation  = {
   
         return deletedPost[0]
       },
-      createComment(parent, args, { db }, info){
-        const userExist = users.some((user) => user.id === args.data.author)
-        const postExist = posts.some((post) => {
-          return post.id === args.data.post && post.published
-        })
-        if(!userExist){
-          throw new Error('This user doesnt exist')
-        }else if(!postExist){
-          throw new Error('This post doesnt exist')
+      createComment(parent, args, { db, pubsub }, info) {
+        const userExists = db.users.some((user) => user.id === args.data.author)
+        const postExists = db.posts.some((post) => post.id === args.data.post && post.published)
+
+        if (!userExists || !postExists) {
+            throw new Error('Unable to find user and post')
         }
-  
+
         const comment = {
-          id: uuidv4(),
-          ...args.data
+            id: uuidv4(),
+            ...args.data
         }
-        comments.push(comment)
-  
+
+        db.comments.push(comment)
+        pubsub.publish(`comment ${args.data.post}`, { comment })
+
         return comment
-      },
+    },
       deleteComment(parent, args, { db }, info){
         const commentIndex = db.comments.findIndex((comment) => comment.id === args.id)
         if(commentIndex === -1){
